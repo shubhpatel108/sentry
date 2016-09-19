@@ -16,6 +16,7 @@ from django.db import models
 from django.db.models import F
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from uuid import uuid1
 
 from sentry.app import locks
 from sentry.db.models import (
@@ -279,3 +280,11 @@ class Project(Model):
                 user, None, 'workflow:notifications',
                 UserOptionValue.all_conversations)
         return opt_value == UserOptionValue.all_conversations
+
+    def get_security_token(self):
+        # TODO(dcramer): this update should happen within a lock
+        security_token = self.get_option('sentry:token', None)
+        if security_token is None:
+            security_token = uuid1().hex
+            self.update_option('sentry:token', security_token)
+        return security_token
